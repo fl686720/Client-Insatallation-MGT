@@ -222,9 +222,7 @@ document.querySelector('#root').style.display='none';mask();
 
 
 
-<script id="hide-database-content-add-client">
-(function(){function hideContentAddClient(){document.querySelectorAll('button').forEach(function(b){if((b.innerText||'').replace(/\s+/g,' ').trim().includes('Add Client')){var r=b.getBoundingClientRect();if(r.top>=110){b.style.setProperty('display','none','important');}else{b.style.removeProperty('display');}}});}hideContentAddClient();new MutationObserver(hideContentAddClient).observe(document.body,{childList:true,subtree:true});window.addEventListener('resize',hideContentAddClient);})();
-</script>
+
 
 <script id="csm-zone-uuid-display-fix">
 (()=>{
