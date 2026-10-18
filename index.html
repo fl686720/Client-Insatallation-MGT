@@ -44,7 +44,7 @@
    const statuses={'Up Coming':'scheduled','Upcoming':'scheduled','Done':'completed','Pending':'pending','Cancelled':'cancelled','Completed':'completed'};
    const status=statuses[client.status]||'pending';
    const existing=await request('schedules?client_id=eq.'+encodeURIComponent(id)+'&select=id');
-   const body={client_id:id,zone_id:zone,scheduled_date:date,status,notes:client.comment||null,created_by:auth().user?.id||null,updated_at:new Date().toISOString()};
+   const body={client_id:id,zone_id:zone,scheduled_date:date,status,notes:client.comment||null,completed_date:status==='completed'?(client.completedDate||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dhaka',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())):null,created_by:auth().user?.id||null,updated_at:new Date().toISOString()};
    if(Array.isArray(existing)&&existing.length){
      await request('schedules?id=eq.'+encodeURIComponent(existing[0].id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});
    }else{
@@ -74,11 +74,11 @@
    const rows=await request('clients?select=*&order=created_at.asc');
    if(!Array.isArray(rows))throw new Error('Supabase clients query did not return a record list.');
    if(rows.length===0)return [];
-   const schedules=await request('schedules?select=client_id,scheduled_date,status,notes');
+   const schedules=await request('schedules?select=client_id,scheduled_date,status,notes,completed_date');
    const zoneRows=await window.csmSupabaseZones.list();
    const zoneNames=new Map((Array.isArray(zoneRows)?zoneRows:[]).map(z=>[z.id,z.name]));
    const byClient=new Map((Array.isArray(schedules)?schedules:[]).map(x=>[x.client_id,x]));
-   return rows.map(r=>{const c=mapRow(r),sc=byClient.get(r.id);if(c.zone)c.zone=zoneNames.get(c.zone)||c.zone;if(sc){c.schedule=sc.scheduled_date||c.schedule;c.status=({'scheduled':'Up Coming','completed':'Done','pending':'Pending','cancelled':'Cancelled'})[sc.status]||c.status;c.comment=sc.notes||c.comment;}return c;});
+   return rows.map(r=>{const c=mapRow(r),sc=byClient.get(r.id);if(c.zone)c.zone=zoneNames.get(c.zone)||c.zone;if(sc){c.schedule=sc.scheduled_date||c.schedule;c.status=({'scheduled':'Up Coming','completed':'Done','pending':'Pending','cancelled':'Cancelled'})[sc.status]||c.status;c.comment=sc.notes||c.comment;c.completedDate=sc.completed_date?String(sc.completed_date).slice(0,10):'';}return c;});
   },
   async save(client, isEdit){
    if(client.zone && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(client.zone))){const zid=await window.csmSupabaseZones.resolve(client.zone);if(zid)client={...client,zone:zid};}
