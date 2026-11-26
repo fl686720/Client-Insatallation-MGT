@@ -12,6 +12,11 @@
   main > div[class*="grid-cols-1"] > div:first-child > div:nth-child(2) { display: none !important; }
 }
 </style>
+<style id="logo-layering-adjustment">
+/* Keep the logo/header in its normal top band, while the app content below it can cover the extended blank logo panel. */
+header{z-index:10!important;}
+main{position:relative;z-index:20;}
+</style>
 </head>
 <body>
   <div id="root"></div>
