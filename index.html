@@ -246,44 +246,85 @@ document.querySelector('#root').style.display='none';mask();
 
 
 <style id="database-section-horizontal-scroll-style">
-/* Keep horizontal scrolling confined to the Database table only. */
-#root .database-table-horizontal-scroll{display:block;width:100%;max-width:100%;min-width:0;max-height:calc(100vh - 300px);overflow-x:auto;overflow-y:auto;overscroll-behavior:contain;}
-#root .database-table-horizontal-scroll table{width:max-content;min-width:100%;}
-#root .database-table-horizontal-scroll thead th{position:sticky;top:0;z-index:5;}
-#root .database-table-horizontal-scroll::-webkit-scrollbar{width:12px;height:12px;}
-#root .database-table-horizontal-scroll::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px;}
-#root .database-table-horizontal-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px;}
+/* Dedicated two-axis scrolling area for the Database table only. */
+#root .database-table-scroll-viewport{
+  display:block !important;
+  position:relative !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:calc(100vh - 300px) !important;
+  min-height:260px !important;
+  max-height:calc(100vh - 300px) !important;
+  overflow:scroll !important;
+  overflow-x:scroll !important;
+  overflow-y:scroll !important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable both-edges;
+  -webkit-overflow-scrolling:touch;
+}
+#root .database-table-scroll-viewport > table{
+  width:max-content !important;
+  min-width:100% !important;
+  max-width:none !important;
+}
+#root .database-table-scroll-viewport > table thead th{
+  position:sticky !important;
+  top:0 !important;
+  z-index:5 !important;
+}
+#root .database-table-scroll-viewport::-webkit-scrollbar{width:14px;height:14px;}
+#root .database-table-scroll-viewport::-webkit-scrollbar-thumb{background:#94a3b8;border:2px solid #f1f5f9;border-radius:10px;}
+#root .database-table-scroll-viewport::-webkit-scrollbar-track{background:#f1f5f9;}
+#root .database-table-scroll-viewport{scrollbar-width:auto;scrollbar-color:#94a3b8 #f1f5f9;}
 </style>
 <script id="database-section-horizontal-scroll-fix">
 (()=>{
  const norm=s=>(s||'').replace(/\s+/g,' ').trim().toLowerCase();
+ const root=()=>document.getElementById('root');
+ function findDatabaseTable(){
+  return [...document.querySelectorAll('#root table')].find(table=>{
+   const h=norm(table.querySelector('thead')?.innerText||table.querySelector('thead')?.textContent||'');
+   return h.includes('ticket')&&h.includes('clint name')&&h.includes('client address')&&h.includes('zone name')&&h.includes('contact number')&&h.includes('schedule')&&h.includes('status')&&h.includes('actions');
+  });
+ }
  function fixDatabaseScroller(){
-  const tables=[...document.querySelectorAll('#root table')];
-  const table=tables.find(t=>{const h=norm(t.querySelector('thead')?.innerText||'');return h.includes('ticket')&&h.includes('client address')&&h.includes('schedule');});
+  const table=findDatabaseTable();
   if(!table)return;
-  let wrapper=table.parentElement;
-  while(wrapper&&wrapper!==document.getElementById('root')&&!wrapper.classList.contains('overflow-x-auto'))wrapper=wrapper.parentElement;
-  if(!wrapper||wrapper===document.getElementById('root'))return;
-  wrapper.classList.add('database-table-horizontal-scroll');
-  wrapper.style.setProperty('width','100%','important');
-  wrapper.style.setProperty('max-width','100%','important');
-  wrapper.style.setProperty('min-width','0','important');
-  wrapper.style.setProperty('overflow-x','auto','important');
-  wrapper.style.setProperty('overflow-y','auto','important');
-  wrapper.style.setProperty('max-height','calc(100vh - 300px)','important');
-  wrapper.style.setProperty('overscroll-behavior','contain','important');
-  let parent=wrapper.parentElement;
-  for(let i=0;parent&&parent!==document.getElementById('root')&&i<5;i++,parent=parent.parentElement){
+  let viewport=table.parentElement;
+  if(!viewport||!viewport.classList.contains('database-table-scroll-viewport')){
+   viewport=document.createElement('div');
+   viewport.className='database-table-scroll-viewport';
+   viewport.setAttribute('data-database-scroll-viewport','true');
+   table.parentNode.insertBefore(viewport,table);
+   viewport.appendChild(table);
+  }
+  viewport.style.setProperty('width','100%','important');
+  viewport.style.setProperty('max-width','100%','important');
+  viewport.style.setProperty('min-width','0','important');
+  viewport.style.setProperty('height','calc(100vh - 300px)','important');
+  viewport.style.setProperty('max-height','calc(100vh - 300px)','important');
+  viewport.style.setProperty('overflow-x','scroll','important');
+  viewport.style.setProperty('overflow-y','scroll','important');
+  table.style.setProperty('width','max-content','important');
+  table.style.setProperty('min-width','100%','important');
+  table.style.setProperty('max-width','none','important');
+  let parent=viewport.parentElement;
+  for(let i=0;parent&&parent!==root()&&i<5;i++,parent=parent.parentElement){
    parent.style.setProperty('min-width','0','important');
    parent.style.setProperty('max-width','100%','important');
   }
  }
- let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(fixDatabaseScroller,100)};
+ let timer;
+ const schedule=()=>{clearTimeout(timer);timer=setTimeout(fixDatabaseScroller,120)};
  const observer=new MutationObserver(schedule);
- const start=()=>{fixDatabaseScroller();observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true});};
+ const start=()=>{
+  fixDatabaseScroller();
+  if(root())observer.observe(root(),{childList:true,subtree:true});
+ };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
  window.addEventListener('resize',schedule,{passive:true});
- document.addEventListener('click',schedule);
+ document.addEventListener('click',schedule,true);
 })();
 </script>
 
