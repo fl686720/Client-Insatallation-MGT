@@ -247,9 +247,10 @@ document.querySelector('#root').style.display='none';mask();
 
 <style id="database-section-horizontal-scroll-style">
 /* Keep horizontal scrolling confined to the Database table only. */
-#root .database-table-horizontal-scroll{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;}
+#root .database-table-horizontal-scroll{display:block;width:100%;max-width:100%;min-width:0;max-height:calc(100vh - 300px);overflow-x:auto;overflow-y:auto;overscroll-behavior:contain;}
 #root .database-table-horizontal-scroll table{width:max-content;min-width:100%;}
-#root .database-table-horizontal-scroll::-webkit-scrollbar{height:12px;}
+#root .database-table-horizontal-scroll thead th{position:sticky;top:0;z-index:5;}
+#root .database-table-horizontal-scroll::-webkit-scrollbar{width:12px;height:12px;}
 #root .database-table-horizontal-scroll::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px;}
 #root .database-table-horizontal-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px;}
 </style>
@@ -268,7 +269,9 @@ document.querySelector('#root').style.display='none';mask();
   wrapper.style.setProperty('max-width','100%','important');
   wrapper.style.setProperty('min-width','0','important');
   wrapper.style.setProperty('overflow-x','auto','important');
-  wrapper.style.setProperty('overflow-y','hidden','important');
+  wrapper.style.setProperty('overflow-y','auto','important');
+  wrapper.style.setProperty('max-height','calc(100vh - 300px)','important');
+  wrapper.style.setProperty('overscroll-behavior','contain','important');
   let parent=wrapper.parentElement;
   for(let i=0;parent&&parent!==document.getElementById('root')&&i<5;i++,parent=parent.parentElement){
    parent.style.setProperty('min-width','0','important');
