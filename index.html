@@ -245,68 +245,42 @@ document.querySelector('#root').style.display='none';mask();
 </script>
 
 
-<script id="database-fixed-bottom-horizontal-scrollbar">
+<style id="database-section-horizontal-scroll-style">
+/* Keep horizontal scrolling confined to the Database table only. */
+#root .database-table-horizontal-scroll{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;}
+#root .database-table-horizontal-scroll table{width:max-content;min-width:100%;}
+#root .database-table-horizontal-scroll::-webkit-scrollbar{height:12px;}
+#root .database-table-horizontal-scroll::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px;}
+#root .database-table-horizontal-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px;}
+</style>
+<script id="database-section-horizontal-scroll-fix">
 (()=>{
- const BAR_ID='db-fixed-horizontal-scrollbar';
- let activeScroller=null, bar=null, inner=null, syncing=false, lastPage=false;
  const norm=s=>(s||'').replace(/\s+/g,' ').trim().toLowerCase();
- function visible(el){return !!(el&&el.getClientRects().length&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden')}
- function databaseActive(){
-   const buttons=[...document.querySelectorAll('button,a,[role="button"]')];
-   // Both desktop and mobile tabs exist; only the selected, visible Database tab counts.
-   const db=buttons.find(x=>visible(x)&&norm(x.innerText||x.textContent)==='database'&&String(x.className||'').includes('bg-[#0F172A]'));
-   if(!db)return false;
-   return [...document.querySelectorAll('table')].some(visible);
+ function fixDatabaseScroller(){
+  const tables=[...document.querySelectorAll('#root table')];
+  const table=tables.find(t=>{const h=norm(t.querySelector('thead')?.innerText||'');return h.includes('ticket')&&h.includes('client address')&&h.includes('schedule');});
+  if(!table)return;
+  let wrapper=table.parentElement;
+  while(wrapper&&wrapper!==document.getElementById('root')&&!wrapper.classList.contains('overflow-x-auto'))wrapper=wrapper.parentElement;
+  if(!wrapper||wrapper===document.getElementById('root'))return;
+  wrapper.classList.add('database-table-horizontal-scroll');
+  wrapper.style.setProperty('width','100%','important');
+  wrapper.style.setProperty('max-width','100%','important');
+  wrapper.style.setProperty('min-width','0','important');
+  wrapper.style.setProperty('overflow-x','auto','important');
+  wrapper.style.setProperty('overflow-y','hidden','important');
+  let parent=wrapper.parentElement;
+  for(let i=0;parent&&parent!==document.getElementById('root')&&i<5;i++,parent=parent.parentElement){
+   parent.style.setProperty('min-width','0','important');
+   parent.style.setProperty('max-width','100%','important');
+  }
  }
- function findScroller(){
-   const tables=[...document.querySelectorAll('table')].filter(visible);
-   let best=null,bestArea=0;
-   for(const table of tables){
-     let p=table.parentElement;
-     for(let i=0;p&&i<7;i++,p=p.parentElement){
-       const cs=getComputedStyle(p), overflow=cs.overflowX;
-       if((overflow==='auto'||overflow==='scroll'||p.scrollWidth>p.clientWidth+8)&&p.scrollWidth>p.clientWidth+8){
-         const area=p.clientWidth*p.clientHeight;
-         if(area>bestArea){best=p;bestArea=area;}
-       }
-     }
-   }
-   return best;
- }
- function ensureBar(){
-   if(bar&&bar.isConnected)return;
-   bar=document.createElement('div');bar.id=BAR_ID;
-   bar.setAttribute('aria-label','Database horizontal scrollbar');
-   bar.style.cssText='position:fixed;left:0;right:0;bottom:0;height:18px;overflow-x:auto;overflow-y:hidden;z-index:2147483000;background:rgba(248,250,252,.98);border-top:1px solid #cbd5e1;box-sizing:border-box;display:none;overscroll-behavior-x:contain;';
-   inner=document.createElement('div');inner.style.cssText='height:1px;width:0;pointer-events:none;';bar.appendChild(inner);document.body.appendChild(bar);
-   bar.addEventListener('scroll',()=>{if(!syncing&&activeScroller){syncing=true;activeScroller.scrollLeft=bar.scrollLeft;syncing=false;}});
- }
- function detach(){if(bar)bar.style.display='none';activeScroller=null;}
- function update(){
-   ensureBar();
-   if(!databaseActive()){detach();lastPage=false;return;}
-   const sc=findScroller();
-   if(!sc||sc.scrollWidth<=sc.clientWidth+2){detach();lastPage=true;return;}
-   if(activeScroller!==sc){
-     if(activeScroller)activeScroller.removeEventListener('scroll',onTableScroll);
-     activeScroller=sc;activeScroller.addEventListener('scroll',onTableScroll,{passive:true});
-   }
-   const rect=activeScroller.getBoundingClientRect();
-   // Match the visible table viewport width and keep the bar fixed to the viewport bottom.
-   bar.style.left=Math.max(0,rect.left)+'px';
-   bar.style.width=Math.max(0,Math.min(window.innerWidth,rect.right)-Math.max(0,rect.left))+'px';
-   inner.style.width=activeScroller.scrollWidth+'px';
-   bar.style.display='block';
-   const max=bar.scrollWidth-bar.clientWidth;
-   if(Math.abs(bar.scrollLeft-activeScroller.scrollLeft)>1){syncing=true;bar.scrollLeft=Math.min(activeScroller.scrollLeft,max);syncing=false;}
-   lastPage=true;
- }
- function onTableScroll(){if(syncing||!bar||!activeScroller)return;syncing=true;bar.scrollLeft=activeScroller.scrollLeft;syncing=false;}
- let timer=0;function schedule(){clearTimeout(timer);timer=setTimeout(update,80)}
- const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
- window.addEventListener('resize',schedule,{passive:true});window.addEventListener('scroll',schedule,{passive:true});
- document.addEventListener('click',()=>setTimeout(update,100));
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(update,300));else setTimeout(update,300);
+ let timer;const schedule=()=>{clearTimeout(timer);timer=setTimeout(fixDatabaseScroller,100)};
+ const observer=new MutationObserver(schedule);
+ const start=()=>{fixDatabaseScroller();observer.observe(document.getElementById('root')||document.body,{childList:true,subtree:true});};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+ window.addEventListener('resize',schedule,{passive:true});
+ document.addEventListener('click',schedule);
 })();
 </script>
 
