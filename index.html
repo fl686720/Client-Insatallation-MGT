@@ -17,6 +17,10 @@
 header{z-index:10!important;}
 main{position:relative;z-index:20;}
 </style>
+<style id="clip-logo-panel-below-header">
+/* Clip only the logo/header panel overflow below the orange header boundary. */
+header:has(img[alt="Carnival Internet"]){overflow:hidden!important;}
+</style>
 </head>
 <body>
   <div id="root"></div>
