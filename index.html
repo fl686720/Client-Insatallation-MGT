@@ -21,6 +21,15 @@ main{position:relative;z-index:20;}
 /* Clip only the logo/header panel overflow below the orange header boundary. */
 header:has(img[alt="Carnival Internet"]){overflow:hidden!important;}
 </style>
+
+<style id="hide-logo-side-borders">
+/* Blend only the two vertical borders beside the Carnival Internet logo into the white header. */
+header:has(img[alt="Carnival Internet"]) > div:has(> img[alt="Carnival Internet"]),
+header:has(img[alt="Carnival Internet"]) img[alt="Carnival Internet"] {
+  border-left-color: #fff !important;
+  border-right-color: #fff !important;
+}
+</style>
 </head>
 <body>
   <div id="root"></div>
